@@ -2,6 +2,9 @@
 export const STAGE_WIDTH:number = 640;
 export const STAGE_HEIGHT:number = 480;
 export const FRAME_RATE:number = 30;
+export const HEAD_POOL:number = 10;
+export const PLAYER_SPEED:number = 10;
+export const ENEMY_POOL:number = 10;
 
 export const ASSET_MANIFEST:Object[] = [
     {

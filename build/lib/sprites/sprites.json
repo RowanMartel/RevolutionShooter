@@ -19,7 +19,8 @@
     [1, 69, 26, 32, 0, -5, 0],
     [29, 69, 26, 32, 0, -5, 0],
     [57, 69, 26, 32, 0, -5, 0],
-    [85, 69, 13, 16, 0, -2, 0]
+    [85, 69, 1, 1, 0, 0, 0],
+    [88, 69, 13, 16, 0, -2, 0]
 ],
 
 "animations": {
@@ -27,12 +28,13 @@
     "Enemies/RoyalistIdle": { "frames": [1] },
     "Guillotine/ChopHead": { "frames": [2, 4, 5, 6, 7, 8, 9, 10, 11] },
     "Guillotine/IdlePrisoner": { "frames": [3] },
-    "Guillotine/IdleHead": { "frames": [12] },
-    "Misc/WhiteFlag": { "frames": [13] }
+    "Guillotine/Idle": { "frames": [12] },
+    "Misc/Bullet": { "frames": [13] },
+    "Misc/WhiteFlag": { "frames": [14] }
 },
 
 "texturepacker": [
-        "SmartUpdateHash: $TexturePacker:SmartUpdate:04569675f757856f3908dfbe56dd0cb5:97602a6a1e609e93683a8dab20321d6a:1eabdf11f75e3a4fe3147baf7b5be24b$",
+        "SmartUpdateHash: $TexturePacker:SmartUpdate:5793413ba80d41be62fccab1b1887cc5:29fb60c4e96636e20044d8c40bf7064d:1eabdf11f75e3a4fe3147baf7b5be24b$",
         "Created with TexturePacker (https://www.codeandweb.com/texturepacker) for EaselJS"
 ]
 

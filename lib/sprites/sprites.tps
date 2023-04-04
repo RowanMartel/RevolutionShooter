@@ -173,9 +173,9 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">../../../SpritesForGame/Enemies/RoyalistFiring.png</key>
-            <key type="filename">../../../SpritesForGame/Enemies/RoyalistIdle.png</key>
-            <key type="filename">../../../SpritesForGame/Misc/WhiteFlag.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Enemies/RoyalistFiring.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Enemies/RoyalistIdle.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Misc/WhiteFlag.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -190,17 +190,17 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_1.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_2.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_3.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_4.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_5.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_6.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_7.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_8.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/ChopHead_9.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/IdleHead.png</key>
-            <key type="filename">../../../SpritesForGame/Guillotine/IdlePrisoner.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_1.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_2.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_3.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_4.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_5.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_6.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_7.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_8.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/ChopHead_9.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/IdleHead.png</key>
+            <key type="filename">../../../../Desktop/SpritesForGame/Guillotine/IdlePrisoner.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -212,15 +212,30 @@
                 <rect>8,8,16,16</rect>
                 <key>scale9Paddings</key>
                 <rect>8,8,16,16</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">../../../../Desktop/SpritesForGame/Misc/Bullet.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>0,0,1,1</rect>
+                <key>scale9Paddings</key>
+                <rect>0,0,1,1</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
         </map>
         <key>fileList</key>
         <array>
-            <filename>../../../SpritesForGame/Enemies</filename>
-            <filename>../../../SpritesForGame/Guillotine</filename>
-            <filename>../../../SpritesForGame/Misc</filename>
+            <filename>../../../../Desktop/SpritesForGame/Enemies</filename>
+            <filename>../../../../Desktop/SpritesForGame/Guillotine</filename>
+            <filename>../../../../Desktop/SpritesForGame/Misc</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

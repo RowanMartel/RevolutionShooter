@@ -12,7 +12,6 @@ export class Background
     constructor(assetManager:AssetManager, stage:createjs.StageGL)
     {
         //initialization
-
         this.sprites = ["Background1","Background2"];
         this.sprite1 = assetManager.getSprite("background", "Background1");
         this.sprite2 = assetManager.getSprite("background", "Background2");
