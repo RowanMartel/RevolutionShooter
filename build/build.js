@@ -1109,17 +1109,81 @@ exports.BasicEnemy = void 0;
 const Enemy_1 = __webpack_require__(/*! ./Enemy */ "./src/Enemy.ts");
 const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
 class BasicEnemy extends Enemy_1.Enemy {
-    constructor(stage, assetManager) {
-        super(stage, assetManager);
+    constructor(stage, assetManager, player) {
+        super(stage, assetManager, player);
         this.sprite = assetManager.getSprite("sprites", "Enemies/RoyalistIdle");
         this.sprite.scaleX = 3;
         this.sprite.scaleY = 3;
         this.speed = (0, Toolkit_1.randomMe)(3, 5);
+        this.idleSprite = "Enemies/RoyalistIdle";
+        this.firingSprite = "Enemies/RoyalistFiring";
         this.reset();
         this.stage.addChild(this.sprite);
+        this.bullet.reset();
     }
 }
 exports.BasicEnemy = BasicEnemy;
+
+
+/***/ }),
+
+/***/ "./src/Bullet.ts":
+/*!***********************!*\
+  !*** ./src/Bullet.ts ***!
+  \***********************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Bullet = void 0;
+const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
+class Bullet {
+    constructor(stage, assetManager, player, enemy) {
+        this.stage = stage;
+        this.assetManager = assetManager;
+        this.player = player;
+        this.enemy = enemy;
+        this.sprite = assetManager.getSprite("sprites", "Misc/Bullet");
+        this.sprite.scaleX = 5;
+        this.sprite.scaleY = 5;
+        stage.addChild(this.sprite);
+    }
+    reset() {
+        this.active = false;
+        this.sprite.visible = false;
+        this.sprite.x = this.enemy.Sprite.x + 25;
+        this.sprite.y = this.enemy.Sprite.y + 40;
+    }
+    get Active() {
+        return this.active;
+    }
+    fire() {
+        this.sprite.x = this.enemy.Sprite.x + 25;
+        this.sprite.y = this.enemy.Sprite.y + 40;
+        this.angle = Math.atan2(this.player.Sprite.y + 50 - this.sprite.y, this.player.Sprite.x + 30 - this.sprite.x);
+        this.active = true;
+        this.sprite.visible = true;
+    }
+    update() {
+        if (!this.active)
+            return;
+        this.sprite.x += 5 * Math.cos(this.angle);
+        this.sprite.y += 5 * Math.sin(this.angle);
+        this.rangeCheck();
+    }
+    rangeCheck() {
+        if (this.sprite.x < -5)
+            this.reset();
+        else if (this.sprite.x > Constants_1.STAGE_WIDTH)
+            this.reset();
+        if (this.sprite.y < -5)
+            this.reset();
+        else if (this.sprite.y > Constants_1.STAGE_HEIGHT)
+            this.reset();
+    }
+}
+exports.Bullet = Bullet;
 
 
 /***/ }),
@@ -1180,11 +1244,13 @@ exports.ASSET_MANIFEST = [
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Enemy = void 0;
+const Bullet_1 = __webpack_require__(/*! ./Bullet */ "./src/Bullet.ts");
 const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
 class Enemy {
-    constructor(stage, assetManager) {
+    constructor(stage, assetManager, player) {
         this.stage = stage;
         this.assetManager = assetManager;
+        this.bullet = new Bullet_1.Bullet(stage, assetManager, player, this);
     }
     reset() {
         this.active = true;
@@ -1195,6 +1261,7 @@ class Enemy {
         this.targetX = this.getRandomX();
         this.targetY = this.getRandomY();
         this.state = Enemy.STATE_MOVING;
+        this.sprite.gotoAndStop(this.idleSprite);
     }
     getRandomX() {
         let x = Math.random() * Constants_1.STAGE_WIDTH;
@@ -1213,6 +1280,7 @@ class Enemy {
         return y;
     }
     update() {
+        this.bullet.update();
         if (!this.active)
             return;
         if (this.state == Enemy.STATE_MOVING)
@@ -1225,7 +1293,7 @@ class Enemy {
             return;
         if (this.sprite.x == this.targetX && this.sprite.y == this.targetY)
             return;
-        this.angle = Math.atan2(this.targetY - this.sprite.y, this.targetX - this.sprite.x) * 180 / Math.PI;
+        this.angle = Math.atan2(this.targetY - this.sprite.y, this.targetX - this.sprite.x);
         if (Math.sqrt(Math.pow(this.targetY - this.sprite.y, 2) + Math.pow(this.targetX - this.sprite.x, 2)) < this.speed * 20) {
             this.state = Enemy.STATE_ATTACKING;
             return;
@@ -1234,6 +1302,16 @@ class Enemy {
         this.sprite.y += this.speed * Math.sin(this.angle);
     }
     attack() {
+        if (!this.bullet.Active) {
+            this.bullet.fire();
+            this.sprite.gotoAndPlay(this.firingSprite);
+            this.sprite.on("animationend", () => {
+                this.sprite.gotoAndStop(this.idleSprite);
+            }, this, true);
+        }
+    }
+    get Sprite() {
+        return this.sprite;
     }
 }
 exports.Enemy = Enemy;
@@ -1256,10 +1334,11 @@ exports.EnemyManager = void 0;
 const BasicEnemy_1 = __webpack_require__(/*! ./BasicEnemy */ "./src/BasicEnemy.ts");
 const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
 class EnemyManager {
-    constructor(stage, assetManager, score) {
+    constructor(stage, assetManager, score, player) {
         this.stage = stage;
         this.assetManager = assetManager;
         this.score = score;
+        this.player = player;
         this.reset();
     }
     reset() {
@@ -1275,10 +1354,10 @@ class EnemyManager {
             case 2:
             case 3:
             case 4:
-                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager);
+                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player);
                 break;
             default:
-                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager);
+                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player);
                 break;
         }
     }
@@ -1330,7 +1409,7 @@ function onReady(e) {
     inputManager = new InputManager_1.InputManager(stage);
     background = new Background_1.Background(assetManager, stage);
     player = new Player_1.Player(stage, assetManager, inputManager);
-    enemyManager = new EnemyManager_1.EnemyManager(stage, assetManager, score);
+    enemyManager = new EnemyManager_1.EnemyManager(stage, assetManager, score, player);
     createjs.Ticker.framerate = Constants_1.FRAME_RATE;
     createjs.Ticker.on("tick", onTick);
     console.log(">> game ready");
@@ -1493,15 +1572,8 @@ class Player {
         else if (this.inputManager.downPressed)
             this.move(Player.DOWN);
     }
-    getPos(position) {
-        switch (position) {
-            case Player.X:
-                return this.sprite.x;
-            case Player.Y:
-                return this.sprite.y;
-            default:
-                return 0;
-        }
+    get Sprite() {
+        return this.sprite;
     }
     move(direction) {
         switch (direction) {
@@ -4174,7 +4246,7 @@ module.exports.formatError = function (err) {
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("131059a61b7026a1aad4")
+/******/ 		__webpack_require__.h = () => ("d669699a83e276f62d03")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */

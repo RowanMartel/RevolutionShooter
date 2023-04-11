@@ -52,18 +52,10 @@ export class Player
         else if (this.inputManager.downPressed) this.move(Player.DOWN);
     }
 
-    public getPos(position:number):number
+    get Sprite():createjs.Sprite
     {
-        switch (position)
-        {
-            case Player.X:
-                return this.sprite.x;
-            case Player.Y:
-                return this.sprite.y;
-            default:
-                return 0;
-        }
-    }// gets current value of the passed-in variable
+        return this.sprite;
+    }
 
     private move(direction:number):void
     {

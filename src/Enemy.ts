@@ -1,5 +1,7 @@
 import { AssetManager } from "./AssetManager";
+import { Bullet } from "./Bullet";
 import { STAGE_HEIGHT, STAGE_WIDTH } from "./Constants";
+import { Player } from "./Player";
 
 export class Enemy
 {
@@ -17,12 +19,17 @@ export class Enemy
     protected speed:number;
     protected angle:number;
     protected state:number;
+    protected bullet:Bullet;
+    protected player:Player;
+    protected idleSprite:string;
+    protected firingSprite:string;
 
-    constructor(stage:createjs.StageGL, assetManager:AssetManager)
+    constructor(stage:createjs.StageGL, assetManager:AssetManager, player:Player)
     {
         // initialization
         this.stage = stage;
         this.assetManager = assetManager;
+        this.bullet = new Bullet(stage, assetManager, player, this);
     }
 
     protected reset():void
@@ -34,6 +41,7 @@ export class Enemy
         this.targetX = this.getRandomX();
         this.targetY = this.getRandomY();
         this.state = Enemy.STATE_MOVING;
+        this.sprite.gotoAndStop(this.idleSprite);
     }
 
     protected getRandomX():number
@@ -52,12 +60,12 @@ export class Enemy
             y = STAGE_HEIGHT / 4
             y = Math.random() * (STAGE_HEIGHT / 4);
         }
-
         return y;
     }
 
     public update():void
     {
+        this.bullet.update();
         if (!this.active) return;
 
         if (this.state == Enemy.STATE_MOVING)
@@ -71,7 +79,7 @@ export class Enemy
         if (this.state != Enemy.STATE_MOVING) return;
         if (this.sprite.x == this.targetX && this.sprite.y == this.targetY) return;
 
-        this.angle = Math.atan2(this.targetY - this.sprite.y, this.targetX - this.sprite.x) * 180 / Math.PI;
+        this.angle = Math.atan2(this.targetY - this.sprite.y, this.targetX - this.sprite.x);
 
         if (Math.sqrt(Math.pow(this.targetY - this.sprite.y, 2) + Math.pow(this.targetX - this.sprite.x, 2)) < this.speed * 20)
         {
@@ -85,6 +93,19 @@ export class Enemy
 
     protected attack():void
     {
+        if (!this.bullet.Active)
+        {
+            this.bullet.fire();
+            this.sprite.gotoAndPlay(this.firingSprite);
+            this.sprite.on("animationend", () => 
+            {
+                this.sprite.gotoAndStop(this.idleSprite);
+            }, this, true);
+        }
+    }
 
+    get Sprite():createjs.Sprite
+    {
+        return this.sprite;
     }
 }

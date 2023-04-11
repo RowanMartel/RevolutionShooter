@@ -2,6 +2,7 @@ import { AssetManager } from "./AssetManager";
 import { BasicEnemy } from "./BasicEnemy";
 import { ENEMY_POOL } from "./Constants";
 import { Enemy } from "./Enemy";
+import { Player } from "./Player";
 import { ScoreTracker } from "./ScoreTracker";
 
 export class EnemyManager
@@ -20,13 +21,15 @@ export class EnemyManager
     private assetManager:AssetManager;
     private score:ScoreTracker;
     private enemies:Enemy[];
+    private player:Player;
 
-    constructor(stage:createjs.StageGL, assetManager:AssetManager, score:ScoreTracker)
+    constructor(stage:createjs.StageGL, assetManager:AssetManager, score:ScoreTracker, player:Player)
     {
         // initialization
         this.stage = stage;
         this.assetManager = assetManager;
         this.score = score;
+        this.player = player;
         this.reset();
     }
 
@@ -48,10 +51,10 @@ export class EnemyManager
             case 2:
             case 3:
             case 4:
-                return new BasicEnemy(this.stage, this.assetManager);
+                return new BasicEnemy(this.stage, this.assetManager, this.player);
                 break;
             default:
-                return new BasicEnemy(this.stage, this.assetManager);
+                return new BasicEnemy(this.stage, this.assetManager, this.player);
                 break;
         }
     }
