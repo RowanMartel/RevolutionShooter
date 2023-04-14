@@ -34,6 +34,7 @@ function onReady(e:createjs.Event):void {
     background = new Background(assetManager, stage);
     player = new Player(stage, assetManager, inputManager);
     enemyManager = new EnemyManager(stage, assetManager, score, player);
+    player.getEnemyManager(enemyManager);
 
     // startup the ticker
     createjs.Ticker.framerate = FRAME_RATE;

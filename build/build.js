@@ -1158,10 +1158,13 @@ class Bullet {
     get Active() {
         return this.active;
     }
+    get Sprite() {
+        return this.sprite;
+    }
     fire() {
         this.sprite.x = this.enemy.Sprite.x + 25;
         this.sprite.y = this.enemy.Sprite.y + 40;
-        this.angle = Math.atan2(this.player.Sprite.y + 50 - this.sprite.y, this.player.Sprite.x + 30 - this.sprite.x);
+        this.angle = Math.atan2(this.player.HitBox.y + 50 - this.sprite.y, this.player.HitBox.x + 30 - this.sprite.x);
         this.active = true;
         this.sprite.visible = true;
     }
@@ -1197,13 +1200,17 @@ exports.Bullet = Bullet;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ASSET_MANIFEST = exports.ENEMY_POOL = exports.PLAYER_SPEED = exports.HEAD_POOL = exports.FRAME_RATE = exports.STAGE_HEIGHT = exports.STAGE_WIDTH = void 0;
+exports.ASSET_MANIFEST = exports.MAX_LIVES = exports.STARTING_LIVES = exports.ENEMY_POOL = exports.SLOW_SPEED = exports.PLAYER_SPEED = exports.MAX_AMMO = exports.STARTING_AMMO = exports.FRAME_RATE = exports.STAGE_HEIGHT = exports.STAGE_WIDTH = void 0;
 exports.STAGE_WIDTH = 640;
 exports.STAGE_HEIGHT = 480;
 exports.FRAME_RATE = 30;
-exports.HEAD_POOL = 10;
+exports.STARTING_AMMO = 5;
+exports.MAX_AMMO = 10;
 exports.PLAYER_SPEED = 10;
+exports.SLOW_SPEED = 5;
 exports.ENEMY_POOL = 10;
+exports.STARTING_LIVES = 4;
+exports.MAX_LIVES = 10;
 exports.ASSET_MANIFEST = [
     {
         type: "json",
@@ -1313,6 +1320,9 @@ class Enemy {
     get Sprite() {
         return this.sprite;
     }
+    getBullets() {
+        return this.bullet;
+    }
 }
 exports.Enemy = Enemy;
 Enemy.STATE_MOVING = 0;
@@ -1366,6 +1376,15 @@ class EnemyManager {
             this.enemies[index].update();
         }
     }
+    getBullets() {
+        let bullets = [];
+        for (let index = 0; index < this.enemies.length; index++) {
+            let currentBullet = this.enemies[index].getBullets();
+            if (currentBullet.Active)
+                bullets.push(currentBullet);
+        }
+        return bullets;
+    }
 }
 exports.EnemyManager = EnemyManager;
 EnemyManager.enemyTypes = {
@@ -1410,6 +1429,7 @@ function onReady(e) {
     background = new Background_1.Background(assetManager, stage);
     player = new Player_1.Player(stage, assetManager, inputManager);
     enemyManager = new EnemyManager_1.EnemyManager(stage, assetManager, score, player);
+    player.getEnemyManager(enemyManager);
     createjs.Ticker.framerate = Constants_1.FRAME_RATE;
     createjs.Ticker.on("tick", onTick);
     console.log(">> game ready");
@@ -1447,7 +1467,26 @@ main();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Head = void 0;
 class Head {
-    constructor(stage, assetManager) {
+    constructor(stage, assetManager, player) {
+        this.player = player;
+        this.stage = stage;
+        this.assetManager = assetManager;
+        this.sprite = assetManager.getSprite("sprites", "Misc/Head");
+        stage.addChild(this.sprite);
+        this.reset();
+    }
+    reset() {
+        this.available = true;
+        this.sprite.visible = false;
+    }
+    fire() {
+        this.sprite.x = this.player.Sprite.x;
+        this.sprite.y = this.player.Sprite.y;
+        this.available = false;
+        this.sprite.visible = true;
+    }
+    get Available() {
+        return this.available;
     }
 }
 exports.Head = Head;
@@ -1472,6 +1511,7 @@ class InputManager {
         this.upPressed = false;
         this.downPressed = false;
         this.spacePressed = false;
+        this.LPressed = false;
         document.onkeydown = (keyEvent) => this.keyLogDown(keyEvent);
         document.onkeyup = (keyEvent) => this.keyLogUp(keyEvent);
     }
@@ -1497,6 +1537,9 @@ class InputManager {
                 this.downPressed = true;
                 this.upPressed = false;
                 break;
+            case "l":
+                this.LPressed = true;
+                break;
             case "space":
                 this.spacePressed = true;
                 break;
@@ -1519,6 +1562,9 @@ class InputManager {
             case "s":
             case "ArrowDown":
                 this.downPressed = false;
+                break;
+            case "l":
+                this.LPressed = false;
                 break;
             case "space":
                 this.spacePressed = false;
@@ -1543,8 +1589,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Player = void 0;
 const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
 const Head_1 = __webpack_require__(/*! ./Head */ "./src/Head.ts");
+const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
 class Player {
     constructor(stage, assetManager, inputManager) {
+        this.hitBox = assetManager.getSprite("sprites", "Misc/Hitbox");
+        this.hitBox.scaleX = 4;
+        this.hitBox.scaleY = 4;
         this.inputManager = inputManager;
         this.assetManager = assetManager;
         this.stage = stage;
@@ -1553,43 +1603,181 @@ class Player {
         this.sprite.scaleY = 2;
         this.reset();
         stage.addChild(this.sprite);
+        stage.addChild(this.hitBox);
+    }
+    getEnemyManager(enemyManager) {
+        this.enemyManager = enemyManager;
     }
     reset() {
+        this.canFire = true;
+        this.inIFrames = false;
         this.sprite.x = Constants_1.STAGE_WIDTH / 2 - 35;
         this.sprite.y = Constants_1.STAGE_HEIGHT * 0.8;
-        this.ammo = [];
-        for (let index = 0; index < Constants_1.HEAD_POOL; index++)
-            this.ammo.push(new Head_1.Head(this.stage, this.assetManager));
         this.speed = Constants_1.PLAYER_SPEED;
+        this.ammo = Constants_1.STARTING_AMMO;
+        this.lives = Constants_1.STARTING_LIVES;
+        this.heads = [];
+        for (let index = 0; index < Constants_1.MAX_AMMO; index++)
+            this.heads.push(new Head_1.Head(this.stage, this.assetManager, this));
+        this.lifeMarkers = [];
+        for (let index = 0; index < Constants_1.MAX_LIVES; index++) {
+            this.lifeMarkers.push(this.assetManager.getSprite("sprites", "Guillotine/Idle"));
+            this.stage.addChild(this.lifeMarkers[index]);
+            this.lifeMarkers[index].y = Constants_1.STAGE_HEIGHT - 33;
+            this.lifeMarkers[index].x = 24 * index - 5;
+            if (index >= Constants_1.STARTING_LIVES - 1)
+                this.lifeMarkers[index].visible = false;
+        }
     }
     update() {
-        if (this.inputManager.leftPressed)
-            this.move(Player.LEFT);
-        else if (this.inputManager.rightPressed)
-            this.move(Player.RIGHT);
-        if (this.inputManager.upPressed)
-            this.move(Player.UP);
-        else if (this.inputManager.downPressed)
-            this.move(Player.DOWN);
+        if (this.inputManager.leftPressed) {
+            if (this.inputManager.upPressed)
+                this.move(Player.LEFT, Player.UP);
+            else if (this.inputManager.downPressed)
+                this.move(Player.LEFT, Player.DOWN);
+            else
+                this.move(Player.LEFT);
+        }
+        else if (this.inputManager.rightPressed) {
+            if (this.inputManager.upPressed)
+                this.move(Player.RIGHT, Player.UP);
+            else if (this.inputManager.downPressed)
+                this.move(Player.RIGHT, Player.DOWN);
+            else
+                this.move(Player.RIGHT);
+        }
+        else if (this.inputManager.upPressed) {
+            if (this.inputManager.leftPressed)
+                this.move(Player.UP, Player.LEFT);
+            else if (this.inputManager.rightPressed)
+                this.move(Player.UP, Player.RIGHT);
+            else
+                this.move(Player.UP);
+        }
+        else if (this.inputManager.downPressed) {
+            if (this.inputManager.leftPressed)
+                this.move(Player.DOWN, Player.LEFT);
+            else if (this.inputManager.rightPressed)
+                this.move(Player.DOWN, Player.RIGHT);
+            else
+                this.move(Player.DOWN);
+        }
+        if (this.isHit())
+            this.damage();
+        this.hitboxMove();
+        this.updateHitboxVisibility();
+        if (this.inputManager.spacePressed)
+            this.fire();
+    }
+    updateHitboxVisibility() {
+        if (this.inputManager.LPressed)
+            this.hitBox.visible = true;
+        else
+            this.hitBox.visible = false;
+    }
+    hitboxMove() {
+        this.hitBox.x = this.sprite.x + 24;
+        this.hitBox.y = this.sprite.y + 20;
+    }
+    isHit() {
+        let bullets = this.enemyManager.getBullets();
+        for (let index = 0; index < bullets.length; index++) {
+            if ((0, Toolkit_1.boxHitTransformed)(this.hitBox, bullets[index].Sprite))
+                return true;
+        }
+        return false;
+    }
+    damage() {
+        if (this.inIFrames)
+            return;
+        if (this.lives > 1)
+            this.lifeMarkers[this.lives - 2].visible = false;
+        this.lives--;
+        if (this.lives == 0) {
+            this.gameOver();
+            return;
+        }
+        this.enterIFrames();
+    }
+    enterIFrames() {
+        this.inIFrames = true;
+        let flashes = 0;
+        this.sprite.visible = false;
+        let flashInterval = setInterval(() => {
+            if (flashes == 5) {
+                clearInterval(flashInterval);
+                this.inIFrames = false;
+                return;
+            }
+            if (this.sprite.visible)
+                this.sprite.visible = false;
+            else
+                this.sprite.visible = true;
+            flashes++;
+        }, 300);
+    }
+    gameOver() {
     }
     get Sprite() {
         return this.sprite;
     }
-    move(direction) {
-        switch (direction) {
+    get HitBox() {
+        return this.hitBox;
+    }
+    move(direction1, direction2 = 0) {
+        let speed;
+        if (this.inputManager.LPressed)
+            speed = this.speed / 2;
+        else
+            speed = this.speed;
+        switch (direction1) {
             case Player.LEFT:
-                this.sprite.x -= this.speed;
+                if (direction2 == Player.UP) {
+                    this.sprite.x -= speed * 0.707;
+                    this.sprite.y -= speed * 0.707;
+                }
+                else if (direction2 == Player.DOWN) {
+                    this.sprite.x -= speed * 0.707;
+                    this.sprite.y += speed * 0.707;
+                }
+                else
+                    this.sprite.x -= speed;
                 break;
             case Player.RIGHT:
-                this.sprite.x += this.speed;
+                if (direction2 == Player.UP) {
+                    this.sprite.x += speed * 0.707;
+                    this.sprite.y -= speed * 0.707;
+                }
+                else if (direction2 == Player.DOWN) {
+                    this.sprite.x += speed * 0.707;
+                    this.sprite.y += speed * 0.707;
+                }
+                else
+                    this.sprite.x += speed;
                 break;
-        }
-        switch (direction) {
             case Player.UP:
-                this.sprite.y -= this.speed;
+                if (direction2 == Player.LEFT) {
+                    this.sprite.x -= speed * 0.707;
+                    this.sprite.y -= speed * 0.707;
+                }
+                if (direction2 == Player.RIGHT) {
+                    this.sprite.x += speed * 0.707;
+                    this.sprite.y -= speed * 0.707;
+                }
+                else
+                    this.sprite.y -= speed;
                 break;
             case Player.DOWN:
-                this.sprite.y += this.speed;
+                if (direction2 == Player.LEFT) {
+                    this.sprite.x -= speed * 0.707;
+                    this.sprite.y += speed * 0.707;
+                }
+                if (direction2 == Player.RIGHT) {
+                    this.sprite.x += speed * 0.707;
+                    this.sprite.y += speed * 0.707;
+                }
+                else
+                    this.sprite.y += speed;
                 break;
         }
         this.clampPos();
@@ -1603,6 +1791,21 @@ class Player {
             this.sprite.y = 0;
         else if (this.sprite.y > Constants_1.STAGE_HEIGHT - 60)
             this.sprite.y = Constants_1.STAGE_HEIGHT - 60;
+    }
+    fire() {
+        if (!this.canFire || this.ammo <= 0)
+            return;
+        this.ammo--;
+        for (let index = 0; index < this.heads.length; index++) {
+            if (this.heads[index].Available) {
+                this.heads[index].fire();
+                break;
+            }
+        }
+        this.canFire = false;
+        setTimeout(() => {
+            this.canFire = true;
+        }, 500);
     }
 }
 exports.Player = Player;
@@ -1659,7 +1862,7 @@ exports.ScoreTracker = ScoreTracker;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.radiusHit = exports.pointHit = exports.boxHit = exports.randomMe = void 0;
+exports.radiusHit = exports.pointHit = exports.boxHitTransformed = exports.boxHit = exports.randomMe = void 0;
 function randomMe(low, high) {
     let randomNum = 0;
     randomNum = Math.floor(Math.random() * (high - low + 1)) + low;
@@ -1682,6 +1885,22 @@ function boxHit(sprite1, sprite2) {
     }
 }
 exports.boxHit = boxHit;
+function boxHitTransformed(sprite1, sprite2) {
+    let width1 = sprite1.getTransformedBounds().width;
+    let height1 = sprite1.getTransformedBounds().height;
+    let width2 = sprite2.getTransformedBounds().width;
+    let height2 = sprite2.getTransformedBounds().height;
+    if ((sprite1.x + width1 > sprite2.x) &&
+        (sprite1.y + height1 > sprite2.y) &&
+        (sprite1.x < sprite2.x + width2) &&
+        (sprite1.y < sprite2.y + height2)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+exports.boxHitTransformed = boxHitTransformed;
 function pointHit(sprite1, sprite2, sprite1HitX = 0, sprite1HitY = 0, stage = null) {
     if (stage != null) {
         let markerPoint = sprite1.localToGlobal(sprite1HitX, sprite1HitY);
@@ -4246,7 +4465,7 @@ module.exports.formatError = function (err) {
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("d669699a83e276f62d03")
+/******/ 		__webpack_require__.h = () => ("863c40afc65bcbe53e8f")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */

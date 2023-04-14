@@ -21,6 +21,23 @@ export function boxHit(sprite1:createjs.Sprite, sprite2:createjs.Sprite):boolean
     }
 }
 
+export function boxHitTransformed(sprite1:createjs.Sprite, sprite2:createjs.Sprite):boolean {
+    // collision detection : bounding box
+    let width1:number = sprite1.getTransformedBounds().width;
+    let height1:number = sprite1.getTransformedBounds().height;
+    let width2:number = sprite2.getTransformedBounds().width;
+    let height2:number = sprite2.getTransformedBounds().height;
+
+    if ((sprite1.x + width1 > sprite2.x) &&
+        (sprite1.y + height1 > sprite2.y) &&
+        (sprite1.x < sprite2.x + width2) &&
+        (sprite1.y < sprite2.y + height2)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 export function pointHit(sprite1:createjs.Sprite, sprite2:createjs.Sprite, sprite1HitX:number = 0, sprite1HitY:number = 0, stage:createjs.StageGL = null):boolean {
     // collision detection : hitTest() method
     

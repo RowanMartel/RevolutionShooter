@@ -39,12 +39,16 @@ export class Bullet
     {
         return this.active;
     }
+    get Sprite():createjs.Sprite
+    {
+        return this.sprite;
+    }
 
     public fire():void
     {
         this.sprite.x = this.enemy.Sprite.x + 25;
         this.sprite.y = this.enemy.Sprite.y + 40;
-        this.angle = Math.atan2(this.player.Sprite.y + 50 - this.sprite.y, this.player.Sprite.x + 30 - this.sprite.x);
+        this.angle = Math.atan2(this.player.HitBox.y + 50 - this.sprite.y, this.player.HitBox.x + 30 - this.sprite.x);
         this.active = true;
         this.sprite.visible = true;
     }

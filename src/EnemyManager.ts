@@ -1,5 +1,6 @@
 import { AssetManager } from "./AssetManager";
 import { BasicEnemy } from "./BasicEnemy";
+import { Bullet } from "./Bullet";
 import { ENEMY_POOL } from "./Constants";
 import { Enemy } from "./Enemy";
 import { Player } from "./Player";
@@ -65,5 +66,16 @@ export class EnemyManager
         {
             this.enemies[index].update();
         }
+    }
+
+    public getBullets():Bullet[]
+    {
+        let bullets:Bullet[] = [];
+        for (let index = 0; index < this.enemies.length; index++)
+        {
+            let currentBullet = this.enemies[index].getBullets()
+            if (currentBullet.Active) bullets.push(currentBullet);    
+        }
+        return bullets;
     }
 }

@@ -6,6 +6,7 @@ export class InputManager
     public upPressed:boolean;
     public downPressed:boolean;
     public spacePressed:boolean;
+    public LPressed:boolean;
 
     constructor (stage:createjs.StageGL)
     {
@@ -14,6 +15,7 @@ export class InputManager
         this.upPressed = false;
         this.downPressed = false;
         this.spacePressed = false;
+        this.LPressed = false
 
         // document.onkeydown = this.keyLogDown;
         document.onkeydown = (keyEvent:KeyboardEvent):void => this.keyLogDown(keyEvent);
@@ -44,6 +46,9 @@ export class InputManager
                 this.downPressed = true;
                 this.upPressed = false;
                 break;
+            case "l":
+                this.LPressed = true;
+                break;
             case "space":
                 this.spacePressed = true;
                 break;
@@ -69,6 +74,9 @@ export class InputManager
             case "s":
             case "ArrowDown":
                 this.downPressed = false;
+                break;
+            case "l":
+                this.LPressed = false;
                 break;
             case "space":
                 this.spacePressed = false;

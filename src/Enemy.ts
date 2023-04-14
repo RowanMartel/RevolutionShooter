@@ -108,4 +108,9 @@ export class Enemy
     {
         return this.sprite;
     }
+
+    public getBullets():Bullet
+    {
+        return this.bullet;
+    }
 }
