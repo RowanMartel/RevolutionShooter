@@ -1,10 +1,12 @@
 import { AssetManager } from "./AssetManager";
 import { BasicEnemy } from "./BasicEnemy";
 import { Bullet } from "./Bullet";
-import { ENEMY_POOL } from "./Constants";
+import { ENEMY_POOL, FLAG_POOL } from "./Constants";
 import { Enemy } from "./Enemy";
 import { Player } from "./Player";
 import { ScoreTracker } from "./ScoreTracker";
+import { randomMe } from "./Toolkit";
+import { WhiteFlag } from "./WhiteFlag";
 
 export class EnemyManager
 {
@@ -23,6 +25,7 @@ export class EnemyManager
     private score:ScoreTracker;
     private enemies:Enemy[];
     private player:Player;
+    private flags:WhiteFlag[];
 
     constructor(stage:createjs.StageGL, assetManager:AssetManager, score:ScoreTracker, player:Player)
     {
@@ -31,6 +34,9 @@ export class EnemyManager
         this.assetManager = assetManager;
         this.score = score;
         this.player = player;
+        this.flags = [];
+        for (let index = 0; index < FLAG_POOL; index++)
+            this.flags.push(new WhiteFlag(stage, assetManager, player));
         this.reset();
     }
 
@@ -39,8 +45,9 @@ export class EnemyManager
         this.enemies = [];
         for (let index = 0; index < ENEMY_POOL; index++)
         {
-            this.enemies[index] = this.determineEnemy();    
+            this.enemies[index] = this.determineEnemy();  
         }
+        this.enemies[0].activate();
     }
 
     private determineEnemy():Enemy
@@ -52,10 +59,10 @@ export class EnemyManager
             case 2:
             case 3:
             case 4:
-                return new BasicEnemy(this.stage, this.assetManager, this.player);
+                return new BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
                 break;
             default:
-                return new BasicEnemy(this.stage, this.assetManager, this.player);
+                return new BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
                 break;
         }
     }
@@ -66,16 +73,56 @@ export class EnemyManager
         {
             this.enemies[index].update();
         }
+        for (let index = 0; index < this.flags.length; index++) 
+        {
+            this.flags[index].update();
+        }
+        this.spawnEnemy();
+    }
+
+    private spawnEnemy():void
+    {
+        if (randomMe(1, 200) > 198 - (this.score.KillCount / 10 + 1))
+        {
+            for (let index = 0; index < this.enemies.length; index++)
+            {
+                if (!this.enemies[index].Active)
+                {
+                    this.enemies[index].activate();
+                    break;
+                }
+            }
+        }
     }
 
     public getBullets():Bullet[]
     {
         let bullets:Bullet[] = [];
-        for (let index = 0; index < this.enemies.length; index++)
+        for (let index1 = 0; index1 < this.enemies.length; index1++)
         {
-            let currentBullet = this.enemies[index].getBullets()
-            if (currentBullet.Active) bullets.push(currentBullet);    
+            for (let index2 = 0; index2 < this.enemies[index2].getBullets().length; index2++)
+            {
+                let currentBullet = this.enemies[index1].getBullets()[index2]
+                if (currentBullet.Active) bullets.push(currentBullet);
+            }
         }
         return bullets;
+    }
+
+    get Enemies():Enemy[]
+    {
+        return this.enemies;
+    }
+
+    public spawnFlag(x:number, y:number):void
+    {
+        for (let index = 0; index < this.flags.length; index++)
+        {
+            if (this.flags[index].Available)
+            {
+                this.flags[index].activate(x, y);
+                break;
+            }
+        }
     }
 }

@@ -49,7 +49,7 @@ export class InputManager
             case "l":
                 this.LPressed = true;
                 break;
-            case "space":
+            case " ":
                 this.spacePressed = true;
                 break;
         }
@@ -78,7 +78,7 @@ export class InputManager
             case "l":
                 this.LPressed = false;
                 break;
-            case "space":
+            case " ":
                 this.spacePressed = false;
                 break;
         }

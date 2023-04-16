@@ -42,6 +42,9 @@ export class Player
         this.sprite = assetManager.getSprite("sprites", "Guillotine/Idle");
         this.sprite.scaleX = 2;
         this.sprite.scaleY = 2;
+        this.heads = [];
+        for (let index = 0; index < MAX_AMMO; index++)
+            this.heads.push(new Head(this.stage, this.assetManager, this));
         this.reset();
         stage.addChild(this.sprite);
         stage.addChild(this.hitBox);
@@ -50,6 +53,8 @@ export class Player
     public getEnemyManager(enemyManager:EnemyManager):void
     {
         this.enemyManager = enemyManager;
+        for (let index = 0; index < this.heads.length; index++)
+            this.heads[index].getEnemyManager(enemyManager);
     }
 
     public reset():void
@@ -61,10 +66,7 @@ export class Player
         this.speed = PLAYER_SPEED;
         this.ammo = STARTING_AMMO;
         this.lives = STARTING_LIVES;
-        
-        this.heads = [];
-        for (let index = 0; index < MAX_AMMO; index++)
-            this.heads.push(new Head(this.stage, this.assetManager, this));
+        this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
 
         this.lifeMarkers = [];
         for (let index = 0; index < MAX_LIVES; index++)
@@ -72,7 +74,7 @@ export class Player
             this.lifeMarkers.push(this.assetManager.getSprite("sprites", "Guillotine/Idle"));
             this.stage.addChild(this.lifeMarkers[index]);
             this.lifeMarkers[index].y = STAGE_HEIGHT - 33;
-            this.lifeMarkers[index].x = 24 * index - 5;
+            this.lifeMarkers[index].x = 24 * index  + 15;
             if (index >= STARTING_LIVES - 1) this.lifeMarkers[index].visible = false;
         }
     }
@@ -108,6 +110,11 @@ export class Player
         this.hitboxMove();
         this.updateHitboxVisibility();
         if (this.inputManager.spacePressed) this.fire();
+
+        for (let index = 0; index < this.heads.length; index++)
+        {
+            this.heads[index].update();
+        }
     }
 
     private updateHitboxVisibility():void
@@ -118,8 +125,8 @@ export class Player
 
     private hitboxMove():void
     {
-        this.hitBox.x = this.sprite.x + 24;
-        this.hitBox.y = this.sprite.y + 20;
+        this.hitBox.x = this.sprite.x;
+        this.hitBox.y = this.sprite.y;
     }
 
     private isHit():boolean
@@ -245,10 +252,10 @@ export class Player
     }
     private clampPos():void
     {
-        if (this.sprite.x < -10) this.sprite.x = -10;
-        else if (this.sprite.x > STAGE_WIDTH - 50) this.sprite.x = STAGE_WIDTH - 50;
-        if (this.sprite.y < 0) this.sprite.y = 0;
-        else if (this.sprite.y > STAGE_HEIGHT - 60) this.sprite.y = STAGE_HEIGHT - 60;
+        if (this.sprite.x < 15) this.sprite.x = 15;
+        else if (this.sprite.x > STAGE_WIDTH - 20) this.sprite.x = STAGE_WIDTH - 20;
+        if (this.sprite.y < 25) this.sprite.y = 25;
+        else if (this.sprite.y > STAGE_HEIGHT - 30) this.sprite.y = STAGE_HEIGHT - 30;
     }
 
     private fire():void
@@ -270,5 +277,22 @@ export class Player
         setTimeout(() => {
             this.canFire = true;    
         }, 500);
+
+        this.sprite.gotoAndPlay("Guillotine/ChopHead");
+        this.sprite.on("animationend", () => 
+        {
+            if (this.ammo > 0) this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
+            else this.sprite.gotoAndStop("Guillotine/Idle");
+        }, this, true);
+    }
+
+    public getAmmo():void
+    {
+        if (this.ammo < MAX_AMMO) this.ammo++;
+        if (this.sprite.currentAnimation != "Guillotine/ChopHead")
+        {
+            if (this.ammo > 0) this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
+            else this.sprite.gotoAndStop("Guillotine/Idle");
+        }
     }
 }

@@ -48,7 +48,7 @@ export class Bullet
     {
         this.sprite.x = this.enemy.Sprite.x + 25;
         this.sprite.y = this.enemy.Sprite.y + 40;
-        this.angle = Math.atan2(this.player.HitBox.y + 50 - this.sprite.y, this.player.HitBox.x + 30 - this.sprite.x);
+        this.angle = Math.atan2(this.player.HitBox.y - this.sprite.y, this.player.HitBox.x - this.sprite.x);
         this.active = true;
         this.sprite.visible = true;
     }

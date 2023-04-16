@@ -1,7 +1,9 @@
 import { AssetManager } from "./AssetManager";
 import { Bullet } from "./Bullet";
-import { STAGE_HEIGHT, STAGE_WIDTH } from "./Constants";
+import { ENEMY_BULLETS, STAGE_HEIGHT, STAGE_WIDTH } from "./Constants";
+import { EnemyManager } from "./EnemyManager";
 import { Player } from "./Player";
+import { ScoreTracker } from "./ScoreTracker";
 
 export class Enemy
 {
@@ -19,23 +21,30 @@ export class Enemy
     protected speed:number;
     protected angle:number;
     protected state:number;
-    protected bullet:Bullet;
+    protected bullets:Bullet[];
     protected player:Player;
     protected idleSprite:string;
     protected firingSprite:string;
+    protected canFire:boolean;
+    protected enemyManager:EnemyManager;
+    protected score:ScoreTracker;
 
-    constructor(stage:createjs.StageGL, assetManager:AssetManager, player:Player)
+    constructor(stage:createjs.StageGL, assetManager:AssetManager, player:Player, enemyManager:EnemyManager, score:ScoreTracker)
     {
         // initialization
+        this.score = score;
+        this.enemyManager = enemyManager;
         this.stage = stage;
         this.assetManager = assetManager;
-        this.bullet = new Bullet(stage, assetManager, player, this);
+        this.bullets = [];
+        for (let index = 0; index < ENEMY_BULLETS; index++) this.bullets.push(new Bullet(stage, assetManager, player, this));
     }
 
     protected reset():void
     {
-        this.active = true;
-        this.sprite.visible = true;;
+        this.canFire = true;
+        this.active = false;
+        this.sprite.visible = false;
         this.sprite.x = this.getRandomX();
         this.sprite.y = -50;
         this.targetX = this.getRandomX();
@@ -65,7 +74,7 @@ export class Enemy
 
     public update():void
     {
-        this.bullet.update();
+        for (let index = 0; index < this.bullets.length; index++) this.bullets[index].update();
         if (!this.active) return;
 
         if (this.state == Enemy.STATE_MOVING)
@@ -93,14 +102,24 @@ export class Enemy
 
     protected attack():void
     {
-        if (!this.bullet.Active)
+        if (!this.canFire) return
+
+        for (let index = 0; index < this.bullets.length; index++)
         {
-            this.bullet.fire();
-            this.sprite.gotoAndPlay(this.firingSprite);
-            this.sprite.on("animationend", () => 
+            if (!this.bullets[index].Active)
             {
-                this.sprite.gotoAndStop(this.idleSprite);
-            }, this, true);
+                this.bullets[index].fire();
+                this.sprite.gotoAndPlay(this.firingSprite);
+                this.sprite.on("animationend", () => 
+                {
+                    this.sprite.gotoAndStop(this.idleSprite);
+                }, this, true);
+                this.canFire = false;
+                setTimeout(() => {
+                    this.canFire = true;    
+                }, 2000);
+                return;
+            }
         }
     }
 
@@ -108,9 +127,27 @@ export class Enemy
     {
         return this.sprite;
     }
-
-    public getBullets():Bullet
+    get Active():boolean
     {
-        return this.bullet;
+        return this.active;
+    }
+
+    public getBullets():Bullet[]
+    {
+        return this.bullets;
+    }
+
+    public die():void
+    {
+        this.score.addKill(1);
+        this.enemyManager.spawnFlag(this.sprite.x, this.sprite.y);
+        this.reset();
+    }
+
+    public activate():void
+    {
+        this.reset();
+        this.sprite.visible = true;
+        this.active = true;
     }
 }

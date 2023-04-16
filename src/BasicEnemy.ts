@@ -1,14 +1,16 @@
 import { AssetManager } from "./AssetManager";
 import { Enemy } from "./Enemy";
+import { EnemyManager } from "./EnemyManager";
 import { Player } from "./Player";
+import { ScoreTracker } from "./ScoreTracker";
 import { randomMe } from "./Toolkit";
 
 export class BasicEnemy extends Enemy
 {
-    constructor(stage:createjs.StageGL, assetManager:AssetManager, player:Player)
+    constructor(stage:createjs.StageGL, assetManager:AssetManager, player:Player, enemyManager:EnemyManager, score:ScoreTracker)
     {
         // initialization
-        super(stage, assetManager, player);
+        super(stage, assetManager, player, enemyManager, score);
         this.sprite = assetManager.getSprite("sprites", "Enemies/RoyalistIdle");
         this.sprite.scaleX = 3;
         this.sprite.scaleY = 3;
@@ -17,6 +19,9 @@ export class BasicEnemy extends Enemy
         this.firingSprite = "Enemies/RoyalistFiring";
         this.reset();
         this.stage.addChild(this.sprite);
-        this.bullet.reset();
+        for (let index = 0; index < this.bullets.length; index++)
+        {
+            this.bullets[index].reset();
+        }
     }
 }

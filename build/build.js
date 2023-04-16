@@ -1109,8 +1109,8 @@ exports.BasicEnemy = void 0;
 const Enemy_1 = __webpack_require__(/*! ./Enemy */ "./src/Enemy.ts");
 const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
 class BasicEnemy extends Enemy_1.Enemy {
-    constructor(stage, assetManager, player) {
-        super(stage, assetManager, player);
+    constructor(stage, assetManager, player, enemyManager, score) {
+        super(stage, assetManager, player, enemyManager, score);
         this.sprite = assetManager.getSprite("sprites", "Enemies/RoyalistIdle");
         this.sprite.scaleX = 3;
         this.sprite.scaleY = 3;
@@ -1119,7 +1119,9 @@ class BasicEnemy extends Enemy_1.Enemy {
         this.firingSprite = "Enemies/RoyalistFiring";
         this.reset();
         this.stage.addChild(this.sprite);
-        this.bullet.reset();
+        for (let index = 0; index < this.bullets.length; index++) {
+            this.bullets[index].reset();
+        }
     }
 }
 exports.BasicEnemy = BasicEnemy;
@@ -1164,7 +1166,7 @@ class Bullet {
     fire() {
         this.sprite.x = this.enemy.Sprite.x + 25;
         this.sprite.y = this.enemy.Sprite.y + 40;
-        this.angle = Math.atan2(this.player.HitBox.y + 50 - this.sprite.y, this.player.HitBox.x + 30 - this.sprite.x);
+        this.angle = Math.atan2(this.player.HitBox.y - this.sprite.y, this.player.HitBox.x - this.sprite.x);
         this.active = true;
         this.sprite.visible = true;
     }
@@ -1200,7 +1202,7 @@ exports.Bullet = Bullet;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ASSET_MANIFEST = exports.MAX_LIVES = exports.STARTING_LIVES = exports.ENEMY_POOL = exports.SLOW_SPEED = exports.PLAYER_SPEED = exports.MAX_AMMO = exports.STARTING_AMMO = exports.FRAME_RATE = exports.STAGE_HEIGHT = exports.STAGE_WIDTH = void 0;
+exports.ASSET_MANIFEST = exports.FLAG_POOL = exports.ENEMY_BULLETS = exports.MAX_LIVES = exports.STARTING_LIVES = exports.ENEMY_POOL = exports.SLOW_SPEED = exports.PLAYER_SPEED = exports.MAX_AMMO = exports.STARTING_AMMO = exports.FRAME_RATE = exports.STAGE_HEIGHT = exports.STAGE_WIDTH = void 0;
 exports.STAGE_WIDTH = 640;
 exports.STAGE_HEIGHT = 480;
 exports.FRAME_RATE = 30;
@@ -1208,9 +1210,11 @@ exports.STARTING_AMMO = 5;
 exports.MAX_AMMO = 10;
 exports.PLAYER_SPEED = 10;
 exports.SLOW_SPEED = 5;
-exports.ENEMY_POOL = 10;
+exports.ENEMY_POOL = 20;
 exports.STARTING_LIVES = 4;
 exports.MAX_LIVES = 10;
+exports.ENEMY_BULLETS = 5;
+exports.FLAG_POOL = 20;
 exports.ASSET_MANIFEST = [
     {
         type: "json",
@@ -1254,15 +1258,19 @@ exports.Enemy = void 0;
 const Bullet_1 = __webpack_require__(/*! ./Bullet */ "./src/Bullet.ts");
 const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
 class Enemy {
-    constructor(stage, assetManager, player) {
+    constructor(stage, assetManager, player, enemyManager, score) {
+        this.score = score;
+        this.enemyManager = enemyManager;
         this.stage = stage;
         this.assetManager = assetManager;
-        this.bullet = new Bullet_1.Bullet(stage, assetManager, player, this);
+        this.bullets = [];
+        for (let index = 0; index < Constants_1.ENEMY_BULLETS; index++)
+            this.bullets.push(new Bullet_1.Bullet(stage, assetManager, player, this));
     }
     reset() {
-        this.active = true;
-        this.sprite.visible = true;
-        ;
+        this.canFire = true;
+        this.active = false;
+        this.sprite.visible = false;
         this.sprite.x = this.getRandomX();
         this.sprite.y = -50;
         this.targetX = this.getRandomX();
@@ -1287,7 +1295,8 @@ class Enemy {
         return y;
     }
     update() {
-        this.bullet.update();
+        for (let index = 0; index < this.bullets.length; index++)
+            this.bullets[index].update();
         if (!this.active)
             return;
         if (this.state == Enemy.STATE_MOVING)
@@ -1309,19 +1318,41 @@ class Enemy {
         this.sprite.y += this.speed * Math.sin(this.angle);
     }
     attack() {
-        if (!this.bullet.Active) {
-            this.bullet.fire();
-            this.sprite.gotoAndPlay(this.firingSprite);
-            this.sprite.on("animationend", () => {
-                this.sprite.gotoAndStop(this.idleSprite);
-            }, this, true);
+        if (!this.canFire)
+            return;
+        for (let index = 0; index < this.bullets.length; index++) {
+            if (!this.bullets[index].Active) {
+                this.bullets[index].fire();
+                this.sprite.gotoAndPlay(this.firingSprite);
+                this.sprite.on("animationend", () => {
+                    this.sprite.gotoAndStop(this.idleSprite);
+                }, this, true);
+                this.canFire = false;
+                setTimeout(() => {
+                    this.canFire = true;
+                }, 2000);
+                return;
+            }
         }
     }
     get Sprite() {
         return this.sprite;
     }
+    get Active() {
+        return this.active;
+    }
     getBullets() {
-        return this.bullet;
+        return this.bullets;
+    }
+    die() {
+        this.score.addKill(1);
+        this.enemyManager.spawnFlag(this.sprite.x, this.sprite.y);
+        this.reset();
+    }
+    activate() {
+        this.reset();
+        this.sprite.visible = true;
+        this.active = true;
     }
 }
 exports.Enemy = Enemy;
@@ -1343,12 +1374,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.EnemyManager = void 0;
 const BasicEnemy_1 = __webpack_require__(/*! ./BasicEnemy */ "./src/BasicEnemy.ts");
 const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
+const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
+const WhiteFlag_1 = __webpack_require__(/*! ./WhiteFlag */ "./src/WhiteFlag.ts");
 class EnemyManager {
     constructor(stage, assetManager, score, player) {
         this.stage = stage;
         this.assetManager = assetManager;
         this.score = score;
         this.player = player;
+        this.flags = [];
+        for (let index = 0; index < Constants_1.FLAG_POOL; index++)
+            this.flags.push(new WhiteFlag_1.WhiteFlag(stage, assetManager, player));
         this.reset();
     }
     reset() {
@@ -1356,6 +1392,7 @@ class EnemyManager {
         for (let index = 0; index < Constants_1.ENEMY_POOL; index++) {
             this.enemies[index] = this.determineEnemy();
         }
+        this.enemies[0].activate();
     }
     determineEnemy() {
         switch (this.score.KillCount) {
@@ -1364,10 +1401,10 @@ class EnemyManager {
             case 2:
             case 3:
             case 4:
-                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player);
+                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
                 break;
             default:
-                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player);
+                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
                 break;
         }
     }
@@ -1375,15 +1412,42 @@ class EnemyManager {
         for (let index = 0; index < this.enemies.length; index++) {
             this.enemies[index].update();
         }
+        for (let index = 0; index < this.flags.length; index++) {
+            this.flags[index].update();
+        }
+        this.spawnEnemy();
+    }
+    spawnEnemy() {
+        if ((0, Toolkit_1.randomMe)(1, 200) > 198 - (this.score.KillCount / 10 + 1)) {
+            for (let index = 0; index < this.enemies.length; index++) {
+                if (!this.enemies[index].Active) {
+                    this.enemies[index].activate();
+                    break;
+                }
+            }
+        }
     }
     getBullets() {
         let bullets = [];
-        for (let index = 0; index < this.enemies.length; index++) {
-            let currentBullet = this.enemies[index].getBullets();
-            if (currentBullet.Active)
-                bullets.push(currentBullet);
+        for (let index1 = 0; index1 < this.enemies.length; index1++) {
+            for (let index2 = 0; index2 < this.enemies[index2].getBullets().length; index2++) {
+                let currentBullet = this.enemies[index1].getBullets()[index2];
+                if (currentBullet.Active)
+                    bullets.push(currentBullet);
+            }
         }
         return bullets;
+    }
+    get Enemies() {
+        return this.enemies;
+    }
+    spawnFlag(x, y) {
+        for (let index = 0; index < this.flags.length; index++) {
+            if (this.flags[index].Available) {
+                this.flags[index].activate(x, y);
+                break;
+            }
+        }
     }
 }
 exports.EnemyManager = EnemyManager;
@@ -1460,18 +1524,21 @@ main();
 /*!*********************!*\
   !*** ./src/Head.ts ***!
   \*********************/
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Head = void 0;
+const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
 class Head {
     constructor(stage, assetManager, player) {
         this.player = player;
         this.stage = stage;
         this.assetManager = assetManager;
         this.sprite = assetManager.getSprite("sprites", "Misc/Head");
+        this.sprite.scaleX = 2;
+        this.sprite.scaleY = 2;
         stage.addChild(this.sprite);
         this.reset();
     }
@@ -1487,6 +1554,28 @@ class Head {
     }
     get Available() {
         return this.available;
+    }
+    update() {
+        if (this.available)
+            return;
+        this.sprite.y -= 20;
+        this.checkHit();
+        this.checkBounds();
+    }
+    checkBounds() {
+        if (this.sprite.y < -5)
+            this.reset();
+    }
+    checkHit() {
+        let enemies = this.enemyManager.Enemies;
+        for (let index = 0; index < enemies.length; index++) {
+            if (enemies[index].Active && (0, Toolkit_1.boxHitTransformed)(this.sprite, enemies[index].Sprite)) {
+                enemies[index].die();
+            }
+        }
+    }
+    getEnemyManager(enemyManager) {
+        this.enemyManager = enemyManager;
     }
 }
 exports.Head = Head;
@@ -1540,7 +1629,7 @@ class InputManager {
             case "l":
                 this.LPressed = true;
                 break;
-            case "space":
+            case " ":
                 this.spacePressed = true;
                 break;
         }
@@ -1566,7 +1655,7 @@ class InputManager {
             case "l":
                 this.LPressed = false;
                 break;
-            case "space":
+            case " ":
                 this.spacePressed = false;
                 break;
         }
@@ -1601,12 +1690,17 @@ class Player {
         this.sprite = assetManager.getSprite("sprites", "Guillotine/Idle");
         this.sprite.scaleX = 2;
         this.sprite.scaleY = 2;
+        this.heads = [];
+        for (let index = 0; index < Constants_1.MAX_AMMO; index++)
+            this.heads.push(new Head_1.Head(this.stage, this.assetManager, this));
         this.reset();
         stage.addChild(this.sprite);
         stage.addChild(this.hitBox);
     }
     getEnemyManager(enemyManager) {
         this.enemyManager = enemyManager;
+        for (let index = 0; index < this.heads.length; index++)
+            this.heads[index].getEnemyManager(enemyManager);
     }
     reset() {
         this.canFire = true;
@@ -1616,15 +1710,13 @@ class Player {
         this.speed = Constants_1.PLAYER_SPEED;
         this.ammo = Constants_1.STARTING_AMMO;
         this.lives = Constants_1.STARTING_LIVES;
-        this.heads = [];
-        for (let index = 0; index < Constants_1.MAX_AMMO; index++)
-            this.heads.push(new Head_1.Head(this.stage, this.assetManager, this));
+        this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
         this.lifeMarkers = [];
         for (let index = 0; index < Constants_1.MAX_LIVES; index++) {
             this.lifeMarkers.push(this.assetManager.getSprite("sprites", "Guillotine/Idle"));
             this.stage.addChild(this.lifeMarkers[index]);
             this.lifeMarkers[index].y = Constants_1.STAGE_HEIGHT - 33;
-            this.lifeMarkers[index].x = 24 * index - 5;
+            this.lifeMarkers[index].x = 24 * index + 15;
             if (index >= Constants_1.STARTING_LIVES - 1)
                 this.lifeMarkers[index].visible = false;
         }
@@ -1668,6 +1760,9 @@ class Player {
         this.updateHitboxVisibility();
         if (this.inputManager.spacePressed)
             this.fire();
+        for (let index = 0; index < this.heads.length; index++) {
+            this.heads[index].update();
+        }
     }
     updateHitboxVisibility() {
         if (this.inputManager.LPressed)
@@ -1676,8 +1771,8 @@ class Player {
             this.hitBox.visible = false;
     }
     hitboxMove() {
-        this.hitBox.x = this.sprite.x + 24;
-        this.hitBox.y = this.sprite.y + 20;
+        this.hitBox.x = this.sprite.x;
+        this.hitBox.y = this.sprite.y;
     }
     isHit() {
         let bullets = this.enemyManager.getBullets();
@@ -1783,14 +1878,14 @@ class Player {
         this.clampPos();
     }
     clampPos() {
-        if (this.sprite.x < -10)
-            this.sprite.x = -10;
-        else if (this.sprite.x > Constants_1.STAGE_WIDTH - 50)
-            this.sprite.x = Constants_1.STAGE_WIDTH - 50;
-        if (this.sprite.y < 0)
-            this.sprite.y = 0;
-        else if (this.sprite.y > Constants_1.STAGE_HEIGHT - 60)
-            this.sprite.y = Constants_1.STAGE_HEIGHT - 60;
+        if (this.sprite.x < 15)
+            this.sprite.x = 15;
+        else if (this.sprite.x > Constants_1.STAGE_WIDTH - 20)
+            this.sprite.x = Constants_1.STAGE_WIDTH - 20;
+        if (this.sprite.y < 25)
+            this.sprite.y = 25;
+        else if (this.sprite.y > Constants_1.STAGE_HEIGHT - 30)
+            this.sprite.y = Constants_1.STAGE_HEIGHT - 30;
     }
     fire() {
         if (!this.canFire || this.ammo <= 0)
@@ -1806,6 +1901,23 @@ class Player {
         setTimeout(() => {
             this.canFire = true;
         }, 500);
+        this.sprite.gotoAndPlay("Guillotine/ChopHead");
+        this.sprite.on("animationend", () => {
+            if (this.ammo > 0)
+                this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
+            else
+                this.sprite.gotoAndStop("Guillotine/Idle");
+        }, this, true);
+    }
+    getAmmo() {
+        if (this.ammo < Constants_1.MAX_AMMO)
+            this.ammo++;
+        if (this.sprite.currentAnimation != "Guillotine/ChopHead") {
+            if (this.ammo > 0)
+                this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
+            else
+                this.sprite.gotoAndStop("Guillotine/Idle");
+        }
     }
 }
 exports.Player = Player;
@@ -1937,6 +2049,59 @@ function radiusHit(sprite1, radius1, sprite2, radius2) {
     }
 }
 exports.radiusHit = radiusHit;
+
+
+/***/ }),
+
+/***/ "./src/WhiteFlag.ts":
+/*!**************************!*\
+  !*** ./src/WhiteFlag.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WhiteFlag = void 0;
+const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
+class WhiteFlag {
+    constructor(stage, assetManager, player) {
+        this.player = player;
+        this.assetManager = assetManager;
+        this.stage = stage;
+        this.sprite = assetManager.getSprite("sprites", "Misc/WhiteFlag");
+        this.sprite.scaleX = 3;
+        this.sprite.scaleY = 3;
+        stage.addChild(this.sprite);
+        this.reset();
+    }
+    reset() {
+        this.available = true;
+        this.sprite.visible = false;
+    }
+    activate(x, y) {
+        this.available = false;
+        this.sprite.visible = true;
+        this.sprite.x = x;
+        this.sprite.y = y;
+    }
+    update() {
+        if (this.available)
+            return;
+        this.sprite.y += 5;
+        this.collectCheck();
+    }
+    collectCheck() {
+        if ((0, Toolkit_1.boxHitTransformed)(this.sprite, this.player.Sprite)) {
+            this.player.getAmmo();
+            this.reset();
+        }
+    }
+    get Available() {
+        return this.available;
+    }
+}
+exports.WhiteFlag = WhiteFlag;
 
 
 /***/ }),
@@ -4465,7 +4630,7 @@ module.exports.formatError = function (err) {
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("863c40afc65bcbe53e8f")
+/******/ 		__webpack_require__.h = () => ("cb9fb0f88bff1de91c14")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */
