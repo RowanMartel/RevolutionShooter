@@ -49,4 +49,46 @@ export const ASSET_MANIFEST:Object[] = [
         id:"glyphs",
         data:0
     },
+    {
+        asset:"sound",
+        src:"./lib/sounds/behead.ogg",
+        id:"behead",
+        data:5
+    },
+    {
+        asset:"sound",
+        src:"./lib/sounds/enemyHit.ogg",
+        id:"enemyHit",
+        data:5
+    },
+    {
+        asset:"sound",
+        src:"./lib/sounds/extraLife.ogg",
+        id:"extraLife",
+        data:5
+    },
+    {
+        asset:"sound",
+        src:"./lib/sounds/gameOver.ogg",
+        id:"gameOver",
+        data:5
+    },
+    {
+        asset:"sound",
+        src:"./lib/sounds/pickup.ogg",
+        id:"pickup",
+        data:5
+    },
+    {
+        asset:"sound",
+        src:"./lib/sounds/playerHit.ogg",
+        id:"playerHit",
+        data:5
+    },
+    {
+        asset:"sound",
+        src:"./lib/sounds/start.ogg",
+        id:"start",
+        data:5
+    },
 ];

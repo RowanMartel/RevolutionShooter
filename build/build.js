@@ -1299,6 +1299,48 @@ exports.ASSET_MANIFEST = [
         id: "glyphs",
         data: 0
     },
+    {
+        asset: "sound",
+        src: "./lib/sounds/behead.ogg",
+        id: "behead",
+        data: 5
+    },
+    {
+        asset: "sound",
+        src: "./lib/sounds/enemyHit.ogg",
+        id: "enemyHit",
+        data: 5
+    },
+    {
+        asset: "sound",
+        src: "./lib/sounds/extraLife.ogg",
+        id: "extraLife",
+        data: 5
+    },
+    {
+        asset: "sound",
+        src: "./lib/sounds/gameOver.ogg",
+        id: "gameOver",
+        data: 5
+    },
+    {
+        asset: "sound",
+        src: "./lib/sounds/pickup.ogg",
+        id: "pickup",
+        data: 5
+    },
+    {
+        asset: "sound",
+        src: "./lib/sounds/playerHit.ogg",
+        id: "playerHit",
+        data: 5
+    },
+    {
+        asset: "sound",
+        src: "./lib/sounds/start.ogg",
+        id: "start",
+        data: 5
+    },
 ];
 
 
@@ -1404,6 +1446,7 @@ class Enemy {
         return this.bullets;
     }
     die() {
+        createjs.Sound.play("enemyHit");
         this.score.addKill(1);
         this.enemyManager.spawnFlag(this.sprite.x, this.sprite.y);
         this.reset();
@@ -1546,6 +1589,7 @@ let score;
 let enemyManager;
 let playButton;
 let resetButton;
+let controls;
 let gameActive;
 function onReady(e) {
     console.log(">> all assets loaded – ready to add sprites to game");
@@ -1561,6 +1605,8 @@ function onReady(e) {
     player.ammoGoToFront();
     gameActive = false;
     playButton.enable();
+    controls = assetManager.getSprite("sprites", "Misc/Controls", Constants_1.STAGE_WIDTH / 2, Constants_1.STAGE_HEIGHT / 2);
+    stage.addChild(controls);
     createjs.Ticker.framerate = Constants_1.FRAME_RATE;
     createjs.Ticker.on("tick", onTick);
     console.log(">> game ready");
@@ -1580,11 +1626,14 @@ function main() {
     canvas.width = Constants_1.STAGE_WIDTH;
     canvas.height = Constants_1.STAGE_HEIGHT;
     stage = new createjs.StageGL(canvas, { antialias: true });
+    stage.enableMouseOver();
     assetManager = new AssetManager_1.AssetManager(stage);
     stage.on("allAssetsLoaded", onReady, null, true);
     assetManager.loadAssets(Constants_1.ASSET_MANIFEST);
 }
 function gameOver() {
+    createjs.Sound.stop();
+    createjs.Sound.play("gameOver");
     enemyManager.reset();
     player.reset();
     gameActive = false;
@@ -1592,10 +1641,13 @@ function gameOver() {
 }
 exports.gameOver = gameOver;
 function reset() {
+    controls.visible = false;
     enemyManager.reset();
     player.reset();
     score.reset();
     gameActive = true;
+    createjs.Sound.stop();
+    createjs.Sound.play("start");
 }
 exports.reset = reset;
 main();
@@ -1898,6 +1950,7 @@ class Player {
             return;
         }
         this.enterIFrames();
+        createjs.Sound.play("playerHit");
     }
     enterIFrames() {
         this.inIFrames = true;
@@ -2012,6 +2065,7 @@ class Player {
             else
                 this.sprite.gotoAndStop("Guillotine/Idle");
         }, this, true);
+        createjs.Sound.play("behead");
     }
     getAmmo() {
         if (this.ammo < Constants_1.MAX_AMMO)
@@ -2027,6 +2081,7 @@ class Player {
     getLife() {
         this.lifeMarkers[this.lives - 1].visible = true;
         this.lives++;
+        createjs.Sound.play("extraLife");
     }
     ammoGoToFront() {
         this.stage.addChild(this.ammoText);
@@ -2200,6 +2255,7 @@ exports.radiusHit = radiusHit;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WhiteFlag = void 0;
+const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
 const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
 class WhiteFlag {
     constructor(stage, assetManager, player, score) {
@@ -2228,11 +2284,17 @@ class WhiteFlag {
             return;
         this.sprite.y += 5;
         this.collectCheck();
+        this.rangeCheck();
+    }
+    rangeCheck() {
+        if (this.sprite.y > Constants_1.STAGE_HEIGHT + 30)
+            this.reset();
     }
     collectCheck() {
         if ((0, Toolkit_1.boxHitTransformed)(this.sprite, this.player.Sprite)) {
             this.player.getAmmo();
             this.score.addPoints(1);
+            createjs.Sound.play("pickup");
             this.reset();
         }
     }
@@ -4769,7 +4831,7 @@ module.exports.formatError = function (err) {
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("3985cadc91f1943ce740")
+/******/ 		__webpack_require__.h = () => ("b975e4bc016b190d600e")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */

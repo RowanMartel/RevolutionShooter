@@ -167,6 +167,7 @@ export class Player
             return;
         }
         this.enterIFrames();
+        createjs.Sound.play("playerHit");
     }
 
     private enterIFrames():void
@@ -297,6 +298,7 @@ export class Player
             if (this.ammo > 0) this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
             else this.sprite.gotoAndStop("Guillotine/Idle");
         }, this, true);
+        createjs.Sound.play("behead");
     }
 
     public getAmmo():void
@@ -314,6 +316,7 @@ export class Player
     {
         this.lifeMarkers[this.lives - 1].visible = true;
         this.lives++;
+        createjs.Sound.play("extraLife");
     }
     
     public ammoGoToFront():void

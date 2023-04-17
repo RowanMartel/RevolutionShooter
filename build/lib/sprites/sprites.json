@@ -26,27 +26,29 @@
     [52, 32, 120, 48, 0, 60, 24],
     [0, 80, 120, 48, 0, 60, 24],
     [120, 80, 120, 48, 0, 60, 24],
-    [0, 128, 120, 48, 0, 60, 24]
+    [0, 128, 120, 48, 0, 60, 24],
+    [120, 128, 120, 48, 0, 60, 24]
 ],
 
 "animations": {
     "Misc/Bullet": { "frames": [0] },
     "Misc/Hitbox": { "frames": [1] },
     "Misc/Head": { "frames": [2] },
-    "Enemies/RoyalistFiring": { "frames": [3, 3, 3, 3, 3] },
+    "Enemies/RoyalistFiring": { "frames": [3,3,3,3,3] },
     "Enemies/RoyalistIdle": { "frames": [4] },
     "Misc/WhiteFlag": { "frames": [5] },
     "Guillotine/ChopHead": { "frames": [6, 8, 9, 10, 11, 12, 13, 14, 15] },
     "Guillotine/IdlePrisoner": { "frames": [7] },
     "Guillotine/Idle": { "frames": [16] },
-    "Misc/PlayPressed": { "frames": [17] },
-    "Misc/PlayUnpressed": { "frames": [18] },
-    "Misc/ResetPresed": { "frames": [19] },
-    "Misc/ResetUnpressed": { "frames": [20] }
+    "Misc/Controls": { "frames": [17] },
+    "Misc/PlayPressed": { "frames": [18] },
+    "Misc/PlayUnpressed": { "frames": [19] },
+    "Misc/ResetPressed": { "frames": [20] },
+    "Misc/ResetUnpressed": { "frames": [21] }
 },
 
 "texturepacker": [
-        "SmartUpdateHash: $TexturePacker:SmartUpdate:46ad576f0cd50772dab464f3bbb80668:e8b44cddf9e8c6157a7ff4e29c1ab6ee:1eabdf11f75e3a4fe3147baf7b5be24b$",
+        "SmartUpdateHash: $TexturePacker:SmartUpdate:b2141fe6fd307adf2e274ebe6b16a0c2:ff08c1049b66b7356ef65f5658cb200f:1eabdf11f75e3a4fe3147baf7b5be24b$",
         "Created with TexturePacker (https://www.codeandweb.com/texturepacker) for EaselJS"
 ]
 

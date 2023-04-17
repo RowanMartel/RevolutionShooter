@@ -139,6 +139,7 @@ export class Enemy
 
     public die():void
     {
+        createjs.Sound.play("enemyHit");
         this.score.addKill(1);
         this.enemyManager.spawnFlag(this.sprite.x, this.sprite.y);
         this.reset();

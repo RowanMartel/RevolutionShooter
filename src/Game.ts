@@ -26,6 +26,7 @@ let score:ScoreTracker;
 let enemyManager:EnemyManager;
 let playButton:Button;
 let resetButton:Button;
+let controls:createjs.Sprite;
 
 // other game variables
 let gameActive:boolean;
@@ -47,6 +48,8 @@ function onReady(e:createjs.Event):void {
     player.ammoGoToFront();
     gameActive = false;
     playButton.enable();
+    controls = assetManager.getSprite("sprites", "Misc/Controls", STAGE_WIDTH / 2, STAGE_HEIGHT / 2 );
+    stage.addChild(controls);
 
     // startup the ticker
     createjs.Ticker.framerate = FRAME_RATE;
@@ -81,6 +84,7 @@ function main():void {
 
     // create stage object
     stage = new createjs.StageGL(canvas, { antialias: true });
+    stage.enableMouseOver();
 
     // AssetManager setup
     assetManager = new AssetManager(stage);
@@ -92,6 +96,8 @@ function main():void {
 // --------------------------------------------------- export functions
 export function gameOver():void
 {
+    createjs.Sound.stop();
+    createjs.Sound.play("gameOver");
     enemyManager.reset();
     player.reset();
     gameActive = false;
@@ -100,10 +106,13 @@ export function gameOver():void
 
 export function reset():void
 {
+    controls.visible = false;
     enemyManager.reset();
     player.reset();
     score.reset();
     gameActive = true;
+    createjs.Sound.stop();
+    createjs.Sound.play("start");
 }
 
 main();

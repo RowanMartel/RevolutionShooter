@@ -1,4 +1,5 @@
 import { AssetManager } from "./AssetManager";
+import { STAGE_HEIGHT } from "./Constants";
 import { Player } from "./Player";
 import { ScoreTracker } from "./ScoreTracker";
 import { boxHit, boxHitTransformed } from "./Toolkit";
@@ -45,6 +46,12 @@ export class WhiteFlag
         if (this.available) return;
         this.sprite.y += 5;
         this.collectCheck();
+        this.rangeCheck();
+    }
+
+    private rangeCheck():void
+    {
+        if (this.sprite.y > STAGE_HEIGHT + 30) this.reset();
     }
 
     private collectCheck():void
@@ -53,6 +60,7 @@ export class WhiteFlag
         {
             this.player.getAmmo();
             this.score.addPoints(1);
+            createjs.Sound.play("pickup");
             this.reset();
         }
     }
