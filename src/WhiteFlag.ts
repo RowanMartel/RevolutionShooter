@@ -1,5 +1,6 @@
 import { AssetManager } from "./AssetManager";
 import { Player } from "./Player";
+import { ScoreTracker } from "./ScoreTracker";
 import { boxHit, boxHitTransformed } from "./Toolkit";
 
 export class WhiteFlag
@@ -10,9 +11,11 @@ export class WhiteFlag
     private sprite:createjs.Sprite;
     private available:boolean;
     private player:Player;
+    private score:ScoreTracker;
 
-    constructor (stage:createjs.StageGL, assetManager:AssetManager, player:Player)
+    constructor (stage:createjs.StageGL, assetManager:AssetManager, player:Player, score:ScoreTracker)
     {
+        this.score = score;
         this.player = player;
         this.assetManager = assetManager;
         this.stage = stage;
@@ -49,6 +52,7 @@ export class WhiteFlag
         if (boxHitTransformed(this.sprite, this.player.Sprite))
         {
             this.player.getAmmo();
+            this.score.addPoints(1);
             this.reset();
         }
     }

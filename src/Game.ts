@@ -11,6 +11,7 @@ import { Player } from "./Player";
 import { InputManager } from "./InputManager";
 import { ScoreTracker } from "./ScoreTracker";
 import { EnemyManager } from "./EnemyManager";
+import { Button } from "./Button";
 
 // game setup variables
 let stage:createjs.StageGL;
@@ -23,18 +24,29 @@ let player:Player;
 let inputManager:InputManager;
 let score:ScoreTracker;
 let enemyManager:EnemyManager;
+let playButton:Button;
+let resetButton:Button;
+
+// other game variables
+let gameActive:boolean;
 
 // --------------------------------------------------- event handler
 function onReady(e:createjs.Event):void {
     console.log(">> all assets loaded – ready to add sprites to game");
 
     // construct game objects here
-    score = new ScoreTracker();
     inputManager = new InputManager(stage);
     background = new Background(assetManager, stage);
     player = new Player(stage, assetManager, inputManager);
+    score = new ScoreTracker(stage, assetManager, player);
     enemyManager = new EnemyManager(stage, assetManager, score, player);
     player.getEnemyManager(enemyManager);
+    playButton = new Button(stage, assetManager, false);
+    resetButton = new Button(stage, assetManager, true);
+    score.goToFront();
+    player.ammoGoToFront();
+    gameActive = false;
+    playButton.enable();
 
     // startup the ticker
     createjs.Ticker.framerate = FRAME_RATE;
@@ -49,8 +61,11 @@ function onTick(e:createjs.Event) {
     // this is your game loop!
     background.update();
 
+
     // update the stage
     stage.update();
+
+    if (!gameActive) return;
     player.update();
     enemyManager.update();
 }
@@ -72,6 +87,23 @@ function main():void {
     stage.on("allAssetsLoaded", onReady, null, true);
     // load the assets
     assetManager.loadAssets(ASSET_MANIFEST);
+}
+
+// --------------------------------------------------- export functions
+export function gameOver():void
+{
+    enemyManager.reset();
+    player.reset();
+    gameActive = false;
+    resetButton.enable();
+}
+
+export function reset():void
+{
+    enemyManager.reset();
+    player.reset();
+    score.reset();
+    gameActive = true;
 }
 
 main();

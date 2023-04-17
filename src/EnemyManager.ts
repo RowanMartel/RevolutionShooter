@@ -35,36 +35,32 @@ export class EnemyManager
         this.score = score;
         this.player = player;
         this.flags = [];
+        this.enemies = [];
+        for (let index = 0; index < ENEMY_POOL; index++)
+        {
+            this.enemies[index] = new BasicEnemy(stage, assetManager, player, this, score); 
+            this.enemies[index].reset();
+            for (let index2 = 0; index2 < this.enemies[index].getBullets().length; index2++)
+                this.enemies[index].getBullets()[index2].reset();
+        }
         for (let index = 0; index < FLAG_POOL; index++)
-            this.flags.push(new WhiteFlag(stage, assetManager, player));
+            this.flags.push(new WhiteFlag(stage, assetManager, player, score));
         this.reset();
     }
 
     public reset():void
     {
-        this.enemies = [];
         for (let index = 0; index < ENEMY_POOL; index++)
+        { 
+            this.enemies[index].reset();
+            for (let index2 = 0; index2 < this.enemies[index].getBullets().length; index2++)
+                this.enemies[index].getBullets()[index2].reset();
+        }
+        for (let index = 0; index < this.flags.length; index++)
         {
-            this.enemies[index] = this.determineEnemy();  
+            this.flags[index].reset();
         }
         this.enemies[0].activate();
-    }
-
-    private determineEnemy():Enemy
-    {
-        switch (this.score.KillCount)
-        {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-                return new BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
-                break;
-            default:
-                return new BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
-                break;
-        }
     }
 
     public update():void

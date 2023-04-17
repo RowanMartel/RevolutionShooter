@@ -2,7 +2,7 @@ import { AssetManager } from "./AssetManager";
 import { Enemy } from "./Enemy";
 import { EnemyManager } from "./EnemyManager";
 import { Player } from "./Player";
-import { boxHitTransformed } from "./Toolkit";
+import { radiusHit } from "./Toolkit";
 
 export class Head
 {
@@ -64,7 +64,7 @@ export class Head
         let enemies:Enemy[] = this.enemyManager.Enemies;
         for (let index = 0; index < enemies.length; index++)
         {
-            if (enemies[index].Active && boxHitTransformed(this.sprite, enemies[index].Sprite))
+            if (enemies[index].Active && radiusHit(this.sprite, 5, enemies[index].Sprite, 15))
             {
                 //this.reset();
                 enemies[index].die();

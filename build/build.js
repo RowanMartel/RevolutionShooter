@@ -1193,6 +1193,53 @@ exports.Bullet = Bullet;
 
 /***/ }),
 
+/***/ "./src/Button.ts":
+/*!***********************!*\
+  !*** ./src/Button.ts ***!
+  \***********************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Button = void 0;
+const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
+const Game_1 = __webpack_require__(/*! ./Game */ "./src/Game.ts");
+class Button {
+    constructor(stage, assetManager, restart) {
+        if (restart) {
+            this.button1 = "Misc/ResetUnpressed";
+            this.button2 = "Misc/ResetPressed";
+        }
+        else {
+            this.button1 = "Misc/PlayUnpressed";
+            this.button2 = "Misc/PlayPressed";
+        }
+        this.sprite = assetManager.getSprite("sprites", this.button1);
+        this.sprite.visible = false;
+        this.sprite.x = Constants_1.STAGE_WIDTH / 2;
+        if (restart)
+            this.sprite.y = Constants_1.STAGE_HEIGHT / 2;
+        else
+            this.sprite.y = Constants_1.STAGE_HEIGHT / 3;
+        stage.addChild(this.sprite);
+        this.sprite.on("click", () => {
+            this.sprite.gotoAndStop(this.button1);
+            this.sprite.visible = false;
+            (0, Game_1.reset)();
+        });
+        this.sprite.on("mouseout", () => this.sprite.gotoAndStop(this.button1));
+        this.sprite.on("mousedown", () => this.sprite.gotoAndStop(this.button2));
+    }
+    enable() {
+        this.sprite.visible = true;
+    }
+}
+exports.Button = Button;
+
+
+/***/ }),
+
 /***/ "./src/Constants.ts":
 /*!**************************!*\
   !*** ./src/Constants.ts ***!
@@ -1238,6 +1285,18 @@ exports.ASSET_MANIFEST = [
         type: "image",
         src: "./lib/sprites/background.png",
         id: "background",
+        data: 0
+    },
+    {
+        type: "json",
+        src: "./lib/sprites/glyphs.json",
+        id: "glyphs",
+        data: 0
+    },
+    {
+        type: "image",
+        src: "./lib/sprites/glyphs.png",
+        id: "glyphs",
         data: 0
     },
 ];
@@ -1383,30 +1442,27 @@ class EnemyManager {
         this.score = score;
         this.player = player;
         this.flags = [];
+        this.enemies = [];
+        for (let index = 0; index < Constants_1.ENEMY_POOL; index++) {
+            this.enemies[index] = new BasicEnemy_1.BasicEnemy(stage, assetManager, player, this, score);
+            this.enemies[index].reset();
+            for (let index2 = 0; index2 < this.enemies[index].getBullets().length; index2++)
+                this.enemies[index].getBullets()[index2].reset();
+        }
         for (let index = 0; index < Constants_1.FLAG_POOL; index++)
-            this.flags.push(new WhiteFlag_1.WhiteFlag(stage, assetManager, player));
+            this.flags.push(new WhiteFlag_1.WhiteFlag(stage, assetManager, player, score));
         this.reset();
     }
     reset() {
-        this.enemies = [];
         for (let index = 0; index < Constants_1.ENEMY_POOL; index++) {
-            this.enemies[index] = this.determineEnemy();
+            this.enemies[index].reset();
+            for (let index2 = 0; index2 < this.enemies[index].getBullets().length; index2++)
+                this.enemies[index].getBullets()[index2].reset();
+        }
+        for (let index = 0; index < this.flags.length; index++) {
+            this.flags[index].reset();
         }
         this.enemies[0].activate();
-    }
-    determineEnemy() {
-        switch (this.score.KillCount) {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
-                break;
-            default:
-                return new BasicEnemy_1.BasicEnemy(this.stage, this.assetManager, this.player, this, this.score);
-                break;
-        }
     }
     update() {
         for (let index = 0; index < this.enemies.length; index++) {
@@ -1470,6 +1526,7 @@ EnemyManager.enemyTypes = {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.reset = exports.gameOver = void 0;
 __webpack_require__(/*! createjs */ "./node_modules/createjs/builds/1.0.0/createjs.min.js");
 const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
 const AssetManager_1 = __webpack_require__(/*! ./AssetManager */ "./src/AssetManager.ts");
@@ -1478,6 +1535,7 @@ const Player_1 = __webpack_require__(/*! ./Player */ "./src/Player.ts");
 const InputManager_1 = __webpack_require__(/*! ./InputManager */ "./src/InputManager.ts");
 const ScoreTracker_1 = __webpack_require__(/*! ./ScoreTracker */ "./src/ScoreTracker.ts");
 const EnemyManager_1 = __webpack_require__(/*! ./EnemyManager */ "./src/EnemyManager.ts");
+const Button_1 = __webpack_require__(/*! ./Button */ "./src/Button.ts");
 let stage;
 let canvas;
 let assetManager;
@@ -1486,14 +1544,23 @@ let player;
 let inputManager;
 let score;
 let enemyManager;
+let playButton;
+let resetButton;
+let gameActive;
 function onReady(e) {
     console.log(">> all assets loaded – ready to add sprites to game");
-    score = new ScoreTracker_1.ScoreTracker();
     inputManager = new InputManager_1.InputManager(stage);
     background = new Background_1.Background(assetManager, stage);
     player = new Player_1.Player(stage, assetManager, inputManager);
+    score = new ScoreTracker_1.ScoreTracker(stage, assetManager, player);
     enemyManager = new EnemyManager_1.EnemyManager(stage, assetManager, score, player);
     player.getEnemyManager(enemyManager);
+    playButton = new Button_1.Button(stage, assetManager, false);
+    resetButton = new Button_1.Button(stage, assetManager, true);
+    score.goToFront();
+    player.ammoGoToFront();
+    gameActive = false;
+    playButton.enable();
     createjs.Ticker.framerate = Constants_1.FRAME_RATE;
     createjs.Ticker.on("tick", onTick);
     console.log(">> game ready");
@@ -1502,6 +1569,8 @@ function onTick(e) {
     document.getElementById("fps").innerHTML = String(createjs.Ticker.getMeasuredFPS());
     background.update();
     stage.update();
+    if (!gameActive)
+        return;
     player.update();
     enemyManager.update();
 }
@@ -1515,6 +1584,20 @@ function main() {
     stage.on("allAssetsLoaded", onReady, null, true);
     assetManager.loadAssets(Constants_1.ASSET_MANIFEST);
 }
+function gameOver() {
+    enemyManager.reset();
+    player.reset();
+    gameActive = false;
+    resetButton.enable();
+}
+exports.gameOver = gameOver;
+function reset() {
+    enemyManager.reset();
+    player.reset();
+    score.reset();
+    gameActive = true;
+}
+exports.reset = reset;
 main();
 
 
@@ -1569,7 +1652,7 @@ class Head {
     checkHit() {
         let enemies = this.enemyManager.Enemies;
         for (let index = 0; index < enemies.length; index++) {
-            if (enemies[index].Active && (0, Toolkit_1.boxHitTransformed)(this.sprite, enemies[index].Sprite)) {
+            if (enemies[index].Active && (0, Toolkit_1.radiusHit)(this.sprite, 5, enemies[index].Sprite, 15)) {
                 enemies[index].die();
             }
         }
@@ -1600,34 +1683,38 @@ class InputManager {
         this.upPressed = false;
         this.downPressed = false;
         this.spacePressed = false;
-        this.LPressed = false;
+        this.shiftPressed = false;
         document.onkeydown = (keyEvent) => this.keyLogDown(keyEvent);
         document.onkeyup = (keyEvent) => this.keyLogUp(keyEvent);
     }
     keyLogDown(keyEvent) {
         switch (keyEvent.key) {
             case "a":
+            case "A":
             case "ArrowLeft":
                 this.leftPressed = true;
                 this.rightPressed = false;
                 break;
             case "d":
+            case "D":
             case "ArrowRight":
                 this.rightPressed = true;
                 this.leftPressed = false;
                 break;
             case "w":
+            case "W":
             case "ArrowUp":
                 this.upPressed = true;
                 this.downPressed = false;
                 break;
             case "s":
+            case "S":
             case "ArrowDown":
                 this.downPressed = true;
                 this.upPressed = false;
                 break;
-            case "l":
-                this.LPressed = true;
+            case "Shift":
+                this.shiftPressed = true;
                 break;
             case " ":
                 this.spacePressed = true;
@@ -1637,23 +1724,27 @@ class InputManager {
     keyLogUp(keyEvent) {
         switch (keyEvent.key) {
             case "a":
+            case "A":
             case "ArrowLeft":
                 this.leftPressed = false;
                 break;
             case "d":
+            case "D":
             case "ArrowRight":
                 this.rightPressed = false;
                 break;
             case "w":
+            case "W":
             case "ArrowUp":
                 this.upPressed = false;
                 break;
             case "s":
+            case "S":
             case "ArrowDown":
                 this.downPressed = false;
                 break;
-            case "l":
-                this.LPressed = false;
+            case "Shift":
+                this.shiftPressed = false;
                 break;
             case " ":
                 this.spacePressed = false;
@@ -1677,6 +1768,7 @@ exports.InputManager = InputManager;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Player = void 0;
 const Constants_1 = __webpack_require__(/*! ./Constants */ "./src/Constants.ts");
+const Game_1 = __webpack_require__(/*! ./Game */ "./src/Game.ts");
 const Head_1 = __webpack_require__(/*! ./Head */ "./src/Head.ts");
 const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
 class Player {
@@ -1693,6 +1785,20 @@ class Player {
         this.heads = [];
         for (let index = 0; index < Constants_1.MAX_AMMO; index++)
             this.heads.push(new Head_1.Head(this.stage, this.assetManager, this));
+        this.ammo = 0;
+        this.ammoText = new createjs.BitmapText(Player.TITLE + this.ammo.toString(), assetManager.getSpriteSheet("glyphs"));
+        this.ammoText.letterSpacing = 1;
+        this.ammoText.x = 15;
+        this.ammoText.y = 65;
+        this.ammoText.scaleX = 1.5;
+        this.ammoText.scaleY = 1.5;
+        this.lifeMarkers = [];
+        for (let index = 0; index < Constants_1.MAX_LIVES; index++) {
+            this.lifeMarkers.push(this.assetManager.getSprite("sprites", "Guillotine/Idle"));
+            this.stage.addChild(this.lifeMarkers[index]);
+            this.lifeMarkers[index].y = Constants_1.STAGE_HEIGHT - 33;
+            this.lifeMarkers[index].x = 24 * index + 15;
+        }
         this.reset();
         stage.addChild(this.sprite);
         stage.addChild(this.hitBox);
@@ -1703,22 +1809,21 @@ class Player {
             this.heads[index].getEnemyManager(enemyManager);
     }
     reset() {
+        this.hitBox.visible = false;
         this.canFire = true;
         this.inIFrames = false;
-        this.sprite.x = Constants_1.STAGE_WIDTH / 2 - 35;
+        this.sprite.x = Constants_1.STAGE_WIDTH / 2;
         this.sprite.y = Constants_1.STAGE_HEIGHT * 0.8;
         this.speed = Constants_1.PLAYER_SPEED;
         this.ammo = Constants_1.STARTING_AMMO;
         this.lives = Constants_1.STARTING_LIVES;
         this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
-        this.lifeMarkers = [];
+        this.ammoText.text = Player.TITLE + this.ammo.toString();
         for (let index = 0; index < Constants_1.MAX_LIVES; index++) {
-            this.lifeMarkers.push(this.assetManager.getSprite("sprites", "Guillotine/Idle"));
-            this.stage.addChild(this.lifeMarkers[index]);
-            this.lifeMarkers[index].y = Constants_1.STAGE_HEIGHT - 33;
-            this.lifeMarkers[index].x = 24 * index + 15;
             if (index >= Constants_1.STARTING_LIVES - 1)
                 this.lifeMarkers[index].visible = false;
+            else
+                this.lifeMarkers[index].visible = true;
         }
     }
     update() {
@@ -1765,7 +1870,7 @@ class Player {
         }
     }
     updateHitboxVisibility() {
-        if (this.inputManager.LPressed)
+        if (this.inputManager.shiftPressed)
             this.hitBox.visible = true;
         else
             this.hitBox.visible = false;
@@ -1788,8 +1893,8 @@ class Player {
         if (this.lives > 1)
             this.lifeMarkers[this.lives - 2].visible = false;
         this.lives--;
-        if (this.lives == 0) {
-            this.gameOver();
+        if (this.lives <= 0) {
+            (0, Game_1.gameOver)();
             return;
         }
         this.enterIFrames();
@@ -1811,8 +1916,6 @@ class Player {
             flashes++;
         }, 300);
     }
-    gameOver() {
-    }
     get Sprite() {
         return this.sprite;
     }
@@ -1821,7 +1924,7 @@ class Player {
     }
     move(direction1, direction2 = 0) {
         let speed;
-        if (this.inputManager.LPressed)
+        if (this.inputManager.shiftPressed)
             speed = this.speed / 2;
         else
             speed = this.speed;
@@ -1891,6 +1994,7 @@ class Player {
         if (!this.canFire || this.ammo <= 0)
             return;
         this.ammo--;
+        this.ammoText.text = Player.TITLE + this.ammo.toString();
         for (let index = 0; index < this.heads.length; index++) {
             if (this.heads[index].Available) {
                 this.heads[index].fire();
@@ -1912,12 +2016,20 @@ class Player {
     getAmmo() {
         if (this.ammo < Constants_1.MAX_AMMO)
             this.ammo++;
+        this.ammoText.text = Player.TITLE + this.ammo.toString();
         if (this.sprite.currentAnimation != "Guillotine/ChopHead") {
             if (this.ammo > 0)
                 this.sprite.gotoAndStop("Guillotine/IdlePrisoner");
             else
                 this.sprite.gotoAndStop("Guillotine/Idle");
         }
+    }
+    getLife() {
+        this.lifeMarkers[this.lives - 1].visible = true;
+        this.lives++;
+    }
+    ammoGoToFront() {
+        this.stage.addChild(this.ammoText);
     }
 }
 exports.Player = Player;
@@ -1927,6 +2039,7 @@ Player.UP = 3;
 Player.DOWN = 4;
 Player.X = 1;
 Player.Y = 2;
+Player.TITLE = "AMMO- ";
 
 
 /***/ }),
@@ -1942,12 +2055,23 @@ Player.Y = 2;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ScoreTracker = void 0;
 class ScoreTracker {
-    constructor() {
+    constructor(stage, assetManager, player) {
+        this.player = player;
+        this.assetManager = assetManager;
+        this.stage = stage;
+        this.score = 0;
+        this.scoreText = new createjs.BitmapText(ScoreTracker.TITLE + this.score.toString(), assetManager.getSpriteSheet("glyphs"));
+        this.scoreText.letterSpacing = 1;
+        this.scoreText.x = 15;
+        this.scoreText.y = 35;
+        this.scoreText.scaleX = 1.5;
+        this.scoreText.scaleY = 1.5;
         this.reset();
     }
     reset() {
         this.score = 0;
         this.killCount = 0;
+        this.scoreText.text = ScoreTracker.TITLE + this.score.toString();
     }
     get KillCount() {
         return this.killCount;
@@ -1957,10 +2081,23 @@ class ScoreTracker {
     }
     addKill(points) {
         this.killCount++;
+        this.addPoints(points);
+    }
+    addPoints(points) {
         this.score += points;
+        this.scoreText.text = ScoreTracker.TITLE + this.score.toString();
+        this.extraLifeCheck();
+    }
+    goToFront() {
+        this.stage.addChild(this.scoreText);
+    }
+    extraLifeCheck() {
+        if (this.score % 50 == 0)
+            this.player.getLife();
     }
 }
 exports.ScoreTracker = ScoreTracker;
+ScoreTracker.TITLE = "SCORE- ";
 
 
 /***/ }),
@@ -2065,7 +2202,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WhiteFlag = void 0;
 const Toolkit_1 = __webpack_require__(/*! ./Toolkit */ "./src/Toolkit.ts");
 class WhiteFlag {
-    constructor(stage, assetManager, player) {
+    constructor(stage, assetManager, player, score) {
+        this.score = score;
         this.player = player;
         this.assetManager = assetManager;
         this.stage = stage;
@@ -2094,6 +2232,7 @@ class WhiteFlag {
     collectCheck() {
         if ((0, Toolkit_1.boxHitTransformed)(this.sprite, this.player.Sprite)) {
             this.player.getAmmo();
+            this.score.addPoints(1);
             this.reset();
         }
     }
@@ -4630,7 +4769,7 @@ module.exports.formatError = function (err) {
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("cb9fb0f88bff1de91c14")
+/******/ 		__webpack_require__.h = () => ("3985cadc91f1943ce740")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */

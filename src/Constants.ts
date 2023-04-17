@@ -37,4 +37,16 @@ export const ASSET_MANIFEST:Object[] = [
         id:"background",
         data:0
     },
+    {
+        type:"json",
+        src:"./lib/sprites/glyphs.json",
+        id:"glyphs",
+        data:0
+    },
+    {
+        type:"image",
+        src:"./lib/sprites/glyphs.png",
+        id:"glyphs",
+        data:0
+    },
 ];

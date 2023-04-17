@@ -40,7 +40,7 @@ export class Enemy
         for (let index = 0; index < ENEMY_BULLETS; index++) this.bullets.push(new Bullet(stage, assetManager, player, this));
     }
 
-    protected reset():void
+    public reset():void
     {
         this.canFire = true;
         this.active = false;
